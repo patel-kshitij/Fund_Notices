@@ -49,7 +49,12 @@ class CapitalCallNotice(NoticeBase):
     partnership_expenses: Decimal | None = None
 
 
-# DistributionNotice goes here. Kshitij writes it.
+class DistributionNotice(NoticeBase):
+    """A notice paying money out to the investor, split by where it came from."""
+
+    return_of_capital: Decimal | None = None
+    realized_gain: Decimal | None = None
+    income: Decimal | None = None
 
 
 class LineItem(_Strict):

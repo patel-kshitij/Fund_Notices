@@ -4,7 +4,7 @@ from decimal import Decimal
 import pytest
 from pydantic import ValidationError
 
-from fund_notices.schema import CapitalCallNotice, Invoice
+from fund_notices.schema import CapitalCallNotice, DistributionNotice, Invoice
 
 
 def test_money_parses_to_exact_decimal() -> None:
@@ -89,3 +89,8 @@ def test_invoice_line_items_parse() -> None:
 
 def test_invoice_without_line_items_gets_an_empty_list() -> None:
     assert Invoice().line_items == []
+
+
+def test_distribution_rejects_capital_call_fields() -> None:
+    with pytest.raises(ValidationError):
+        DistributionNotice.model_validate({"management_fee": "10.00"})
