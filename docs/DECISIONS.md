@@ -63,3 +63,18 @@ Why: Invoices are the odd document type in a fund administrator's inbox, and a r
 
 Decision: The train set has 42 documents, 14 of each type. The test set has 45, 15 of each type. This replaces the 15 train documents in the first plan.
 Why: More train documents give the baseline more to learn from and retrieval more examples to choose from, at no cost, since generation takes seconds. The test set stays at 45 because a smaller one makes each document worth too much of the score. 42 is used instead of 40 so each type gets the same number.
+
+## 12. Money in the model's schema must be a number
+
+Decision: Before the schema goes to Ollama, every money field allows a JSON number or null, never a string.
+Why: Pydantic lets a Decimal be a string. A string lets a small model copy "106,473.60 EUR" as printed, which then fails validation. A number only schema blocks that mistake before it happens, and Pydantic still reads the number into an exact Decimal.
+
+## 13. A check that cannot run is a problem
+
+Decision: When a math check needs a number that is missing, it reports a problem instead of passing.
+Why: A check that did not run has not shown the document is fine. Treating it as a pass would let a notice with a missing total through without review.
+
+## 14. Extraction before the classifier
+
+Decision: Extraction and the math checks are built before the classifier. Until the classifier exists, extraction is given the true type from the answer file.
+Why: Extraction and the checks are the core of the tool and the larger risk, so they come first. The cost is that early extraction scores assume a perfect classifier. Scores from the full pipeline will come only from the evaluate command.

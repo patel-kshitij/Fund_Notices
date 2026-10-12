@@ -12,3 +12,5 @@ cache/
 .env
 
 *.swp
+
+misc/
