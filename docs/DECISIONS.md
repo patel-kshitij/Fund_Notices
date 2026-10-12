@@ -58,3 +58,8 @@ Why: The laptop has Python 3.14, which the stack does not target. uv keeps its P
 
 Decision: Invoices are extracted with a full model: vendor, bill to, invoice number, dates, currency, line items (description, quantity, unit price, amount), subtotal, tax, and total.
 Why: Invoices are the odd document type in a fund administrator's inbox, and a realistic one has line items. It also gives invoices their own math checks. The cost is more generator work and a harder schema for a small local model.
+
+## 11. 42 train and 45 test documents
+
+Decision: The train set has 42 documents, 14 of each type. The test set has 45, 15 of each type. This replaces the 15 train documents in the first plan.
+Why: More train documents give the baseline more to learn from and retrieval more examples to choose from, at no cost, since generation takes seconds. The test set stays at 45 because a smaller one makes each document worth too much of the score. 42 is used instead of 40 so each type gets the same number.

@@ -9,8 +9,9 @@ See docs/DECISIONS.md, entry 4, and docs/reference/data-format.md.
 from datetime import date
 from decimal import Decimal
 from enum import StrEnum
+from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator
 
 
 class DocType(StrEnum):
@@ -77,3 +78,46 @@ class Invoice(_Strict):
     subtotal: Decimal | None = None
     tax: Decimal | None = None
     total: Decimal | None = None
+
+
+ExtractedFields = CapitalCallNotice | DistributionNotice | Invoice
+
+MODEL_FOR_TYPE: dict[DocType, type[ExtractedFields]] = {
+    DocType.CAPITAL_CALL: CapitalCallNotice,
+    DocType.DISTRIBUTION: DistributionNotice,
+    DocType.INVOICE: Invoice,
+}
+
+
+ErrorKind = Literal["split_total_mismatch", "unfunded_after_mismatch"]
+
+
+class PlantedError(_Strict):
+    """A math mistake the generator put into a document on purpose."""
+
+    kind: ErrorKind
+    field: str
+    correct_value: Decimal
+    printed_value: Decimal
+
+
+class AnswerFile(_Strict):
+    """The true contents of one generated PDF. See docs/reference/data-format.md."""
+
+    doc_id: str
+    split: Literal["train", "test"]
+    doc_type: DocType
+    layout: int
+    title: str | None
+    fields: ExtractedFields
+    planted_error: PlantedError | None = None
+
+    @field_validator("fields", mode="before")
+    @classmethod
+    def _parse_fields_by_type(cls, value: object, info: ValidationInfo) -> object:
+        # Pick the model from doc_type. Without this, a notice that only has
+        # shared fields would fit both notice models and Pydantic would guess.
+        doc_type = info.data.get("doc_type")
+        if isinstance(value, dict) and doc_type in MODEL_FOR_TYPE:
+            return MODEL_FOR_TYPE[doc_type].model_validate(value)
+        return value

@@ -1,0 +1,29 @@
+{
+  "doc_id": "test_013",
+  "split": "test",
+  "doc_type": "capital_call",
+  "layout": 0,
+  "title": null,
+  "fields": {
+    "fund_name": "Glimmerdale Buyout Fund V",
+    "investor_name": "Draymere Charitable Trust",
+    "issue_date": "2025-04-16",
+    "due_date": "2025-05-05",
+    "currency": "USD",
+    "commitment": "1000000",
+    "unfunded_commitment_before": "416300.00",
+    "unfunded_commitment_after": "379846.01",
+    "cumulative_contributions_before": "583700.00",
+    "cumulative_distributions_before": "308100.00",
+    "total_amount": "37453.99",
+    "investments": "31000.00",
+    "management_fee": "4200.00",
+    "partnership_expenses": "2253.99"
+  },
+  "planted_error": {
+    "kind": "unfunded_after_mismatch",
+    "field": "unfunded_commitment_after",
+    "correct_value": "378846.01",
+    "printed_value": "379846.01"
+  }
+}

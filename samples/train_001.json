@@ -1,0 +1,24 @@
+{
+  "doc_id": "train_001",
+  "split": "train",
+  "doc_type": "capital_call",
+  "layout": 2,
+  "title": "Drawdown Notice",
+  "fields": {
+    "fund_name": "Glimmerdale Buyout Fund V",
+    "investor_name": "Draymere Charitable Trust",
+    "issue_date": "2026-07-17",
+    "due_date": "2026-08-05",
+    "currency": "GBP",
+    "commitment": "16500000",
+    "unfunded_commitment_before": "9281250.00",
+    "unfunded_commitment_after": "9189477.61",
+    "cumulative_contributions_before": "7218750.00",
+    "cumulative_distributions_before": "5558850.00",
+    "total_amount": "91772.39",
+    "investments": "0.00",
+    "management_fee": "51150.00",
+    "partnership_expenses": "40622.39"
+  },
+  "planted_error": null
+}

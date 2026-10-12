@@ -4,7 +4,13 @@ from decimal import Decimal
 import pytest
 from pydantic import ValidationError
 
-from fund_notices.schema import CapitalCallNotice, DistributionNotice, Invoice
+from fund_notices.schema import (
+    AnswerFile,
+    CapitalCallNotice,
+    DistributionNotice,
+    DocType,
+    Invoice,
+)
 
 
 def test_money_parses_to_exact_decimal() -> None:
@@ -94,3 +100,17 @@ def test_invoice_without_line_items_gets_an_empty_list() -> None:
 def test_distribution_rejects_capital_call_fields() -> None:
     with pytest.raises(ValidationError):
         DistributionNotice.model_validate({"management_fee": "10.00"})
+
+
+def test_answer_file_keeps_its_notice_type_after_a_json_round_trip() -> None:
+    answer = AnswerFile(
+        doc_id="test_001",
+        split="test",
+        doc_type=DocType.DISTRIBUTION,
+        layout=0,
+        title=None,
+        fields=DistributionNotice(total_amount=Decimal("10.00")),
+    )
+    loaded = AnswerFile.model_validate_json(answer.model_dump_json())
+    assert isinstance(loaded.fields, DistributionNotice)
+    assert loaded == answer
