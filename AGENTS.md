@@ -32,7 +32,7 @@ Read this file first, every session. Then read docs/STATUS.md to see where we ar
 
 ## Stack
 
-Python 3.12 (managed by uv), src layout, pyproject.toml. fpdf2 and pypdf for PDFs. pandas and NumPy for scoring. scikit-learn for the baseline. sentence-transformers with all-MiniLM-L6-v2 for embeddings. ollama for the LLM. Pydantic v2, pytest, ruff, mypy.
+Python 3.12 (managed by uv), src layout, pyproject.toml. fpdf2 and pypdf for PDFs. pandas and NumPy for scoring. scikit-learn for the baseline. sentence-transformers with all-MiniLM-L6-v2 for embeddings. ollama for the LLM. Streamlit for the demo page. Pydantic v2, pytest, ruff, mypy.
 
 ## How we work
 

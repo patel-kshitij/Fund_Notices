@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from fund_notices.checks import check
+from fund_notices.checks import CHECK_FOR_ERROR, check
 from fund_notices.schema import AnswerFile, CapitalCallNotice, Invoice, LineItem
 
 Dataset = tuple[list[AnswerFile], list[AnswerFile]]
@@ -15,16 +15,12 @@ def test_every_clean_document_passes(dataset: Dataset) -> None:
 def test_every_planted_error_is_caught_by_the_right_check(dataset: Dataset) -> None:
     planted = [a for a in dataset[1] if a.planted_error is not None]
     assert len(planted) == 6
-    expected_check = {
-        "split_total_mismatch": "split_total",
-        "unfunded_after_mismatch": "unfunded_after",
-    }
     for answer in planted:
         assert answer.planted_error is not None
         # A wrong total on a capital call also breaks the unfunded rule, so more
         # than one check may fire. The check named for the mistake must be one of them.
         checks = {p.check for p in check(answer.fields)}
-        assert expected_check[answer.planted_error.kind] in checks, answer.doc_id
+        assert CHECK_FOR_ERROR[answer.planted_error.kind] in checks, answer.doc_id
 
 
 def test_missing_number_is_a_problem_not_a_pass() -> None:

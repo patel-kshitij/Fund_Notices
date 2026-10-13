@@ -31,6 +31,15 @@ def test_cache_returns_the_saved_reply_without_calling_the_model(tmp_path: Path)
     assert (again.model_calls, again.cache_hits) == (0, 1)
 
 
+def test_cache_keeps_the_model_time_for_reruns(tmp_path: Path) -> None:
+    first = CachedClient(CountingClient(), tmp_path)
+    first.complete_json("s", "p", {})
+    again = CachedClient(CountingClient(), tmp_path)
+    again.complete_json("s", "p", {})
+    assert again.model_calls == 0
+    assert again.model_seconds == first.model_seconds > 0
+
+
 def test_cache_key_covers_prompt_schema_and_model(tmp_path: Path) -> None:
     inner = CountingClient()
     client = CachedClient(inner, tmp_path)

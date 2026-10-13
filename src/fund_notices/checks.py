@@ -10,7 +10,19 @@ See docs/DECISIONS.md, entry 4.
 from dataclasses import dataclass
 from decimal import Decimal
 
-from fund_notices.schema import CapitalCallNotice, DistributionNotice, ExtractedFields, Invoice
+from fund_notices.schema import (
+    CapitalCallNotice,
+    DistributionNotice,
+    ErrorKind,
+    ExtractedFields,
+    Invoice,
+)
+
+# The check that should catch each kind of planted mistake.
+CHECK_FOR_ERROR: dict[ErrorKind, str] = {
+    "split_total_mismatch": "split_total",
+    "unfunded_after_mismatch": "unfunded_after",
+}
 
 
 @dataclass(frozen=True)

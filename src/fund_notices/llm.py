@@ -9,6 +9,7 @@ See docs/DECISIONS.md, entries 6 and 7.
 import hashlib
 import json
 import os
+import time
 from pathlib import Path
 from typing import Any, Protocol
 
@@ -58,20 +59,31 @@ class OllamaClient:
             ],
             # Ollama only lets the model write JSON that fits this schema.
             format=schema,
+            # No hidden reasoning before the answer. On this laptop thinking made the
+            # first document take several minutes. Models that cannot think ignore it.
+            think=False,
             # Temperature 0 makes the model pick its most likely answer every time.
-            options={"temperature": 0},
+            # num_ctx is how many tokens the model can see. A prompt with a worked
+            # example needs more room than the default may give, and Ollama would
+            # silently cut the start of the prompt, where the rules are.
+            options={"temperature": 0, "num_ctx": 4096},
         )
         return response.message.content or ""
 
 
 class CachedClient:
-    """Wraps a client and keeps every reply in a folder, keyed by a hash of the request."""
+    """Wraps a client and keeps every reply in a folder, keyed by a hash of the request.
+
+    Each file also stores how long the model took. model_seconds adds those up,
+    so a rerun served from the cache still reports the real model time.
+    """
 
     def __init__(self, inner: LLMClient, folder: Path) -> None:
         self.inner = inner
         self.folder = folder
         self.model_calls = 0
         self.cache_hits = 0
+        self.model_seconds = 0.0
 
     @property
     def name(self) -> str:
@@ -81,10 +93,15 @@ class CachedClient:
         request = json.dumps([self.name, system, prompt, schema], sort_keys=True)
         path = self.folder / f"{hashlib.sha256(request.encode()).hexdigest()}.json"
         if path.is_file():
+            saved = json.loads(path.read_text(encoding="utf-8"))
             self.cache_hits += 1
-            return path.read_text(encoding="utf-8")
+            self.model_seconds += saved["seconds"]
+            return str(saved["reply"])
+        start = time.perf_counter()
         reply = self.inner.complete_json(system, prompt, schema)
+        seconds = time.perf_counter() - start
         self.model_calls += 1
+        self.model_seconds += seconds
         self.folder.mkdir(parents=True, exist_ok=True)
-        path.write_text(reply, encoding="utf-8")
+        path.write_text(json.dumps({"reply": reply, "seconds": seconds}), encoding="utf-8")
         return reply

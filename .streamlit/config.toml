@@ -1,0 +1,12 @@
+# Read when streamlit runs from the project folder.
+
+[browser]
+# Streamlit sends usage statistics by default. This tool keeps everything on the laptop.
+gatherUsageStats = false
+
+[server]
+# Skip the first run email prompt. Open the URL that streamlit prints.
+headless = true
+# Only this laptop can open the page. Without this, anyone on the same
+# network could, and streamlit looks up the public IP address online.
+address = "localhost"

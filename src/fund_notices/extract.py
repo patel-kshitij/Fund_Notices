@@ -2,14 +2,18 @@
 
 The flow for one document:
 1. Build a prompt with the rules, the fields for this type, and the text.
+   It may also hold a worked example: a similar train document and its answer.
 2. Ask the LLM for JSON that fits the type's Pydantic schema.
 3. Check the reply with Pydantic. If it fails, ask once more and show the error.
 4. If the second reply also fails, give up and return the error, so the
    document goes to a person instead of the pipeline guessing.
-See docs/DECISIONS.md, entries 4 and 7.
+See docs/DECISIONS.md, entries 4, 7, and 18.
 """
 
+import json
 from dataclasses import dataclass
+from datetime import date
+from decimal import Decimal
 from typing import Any
 
 from pydantic import ValidationError
@@ -71,6 +75,15 @@ HINTS = {
 }
 
 
+@dataclass(frozen=True)
+class Example:
+    """A train document and its true fields, shown to the model as a worked example."""
+
+    doc_id: str
+    text: str
+    fields: ExtractedFields
+
+
 @dataclass
 class ExtractionResult:
     fields: ExtractedFields | None
@@ -95,16 +108,67 @@ def numbers_only(schema: Any) -> Any:
     return result
 
 
-def build_prompt(text: str, doc_type: DocType) -> str:
+def require_every_key(schema: Any) -> Any:
+    """Return a copy of a JSON schema where every object must list all its keys.
+
+    Our models give every field a default, so Pydantic marks none as required.
+    The model then skips keys it is unsure of. Requiring every key makes it
+    write each one, as a value or as null.
+    """
+    if isinstance(schema, list):
+        return [require_every_key(item) for item in schema]
+    if not isinstance(schema, dict):
+        return schema
+    result = {key: require_every_key(value) for key, value in schema.items()}
+    if isinstance(result.get("properties"), dict):
+        result["required"] = list(result["properties"])
+    return result
+
+
+def model_schema(doc_type: DocType) -> Any:
+    """The JSON schema sent to the LLM for this type."""
+    return require_every_key(numbers_only(MODEL_FOR_TYPE[doc_type].model_json_schema()))
+
+
+def answer_json(value: Any) -> str:
+    """JSON text for a value from model_dump(), with every Decimal written exactly.
+
+    json.dumps cannot write a Decimal. A float could change the digits, and a
+    string would put money in quotes, which the rules forbid. So a Decimal is
+    written as its own digits with str().
+    """
+    if isinstance(value, Decimal):
+        return str(value)
+    if isinstance(value, date):
+        return json.dumps(value.isoformat())
+    if isinstance(value, dict):
+        pairs = (f"{json.dumps(key)}: {answer_json(item)}" for key, item in value.items())
+        return "{" + ", ".join(pairs) + "}"
+    if isinstance(value, list):
+        return "[" + ", ".join(answer_json(item) for item in value) + "]"
+    return json.dumps(value)
+
+
+def build_prompt(text: str, doc_type: DocType, example: Example | None = None) -> str:
     hints = "\n".join(f"- {name}: {hint}" for name, hint in HINTS[doc_type].items())
-    return f"Document type: {doc_type}\n\nFields:\n{hints}\n\nDocument text:\n{text}"
+    shown = ""
+    if example is not None:
+        shown = (
+            "Worked example from a similar document. It shows the format only. "
+            "Take every value from the document text further down.\n\n"
+            f"Example text:\n{example.text}\n\n"
+            f"Example answer:\n{answer_json(example.fields.model_dump())}\n\n"
+        )
+    return f"Document type: {doc_type}\n\nFields:\n{hints}\n\n{shown}Document text:\n{text}"
 
 
-def extract(text: str, doc_type: DocType, client: LLMClient) -> ExtractionResult:
+def extract(
+    text: str, doc_type: DocType, client: LLMClient, example: Example | None = None
+) -> ExtractionResult:
     """Ask the LLM for the fields of one document, with one retry on a bad reply."""
     model = MODEL_FOR_TYPE[doc_type]
-    schema = numbers_only(model.model_json_schema())
-    prompt = build_prompt(text, doc_type)
+    schema = model_schema(doc_type)
+    prompt = build_prompt(text, doc_type, example)
     error = ""
     for attempt in range(1, MAX_ATTEMPTS + 1):
         reply = client.complete_json(SYSTEM, prompt, schema)
@@ -113,7 +177,7 @@ def extract(text: str, doc_type: DocType, client: LLMClient) -> ExtractionResult
         except ValidationError as exc:
             error = str(exc)
             prompt = (
-                f"{build_prompt(text, doc_type)}\n\nYour last reply was:\n{reply}\n\n"
+                f"{build_prompt(text, doc_type, example)}\n\nYour last reply was:\n{reply}\n\n"
                 f"It was rejected because:\n{error}\n\nReply again with JSON that fixes this."
             )
     return ExtractionResult(fields=None, attempts=MAX_ATTEMPTS, error=error)

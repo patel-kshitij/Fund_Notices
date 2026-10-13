@@ -14,3 +14,4 @@ reviewed: 2026-10-08
 - [DECISIONS](DECISIONS.md)
 - [Data format](reference/data-format.md)
 - [Code guide](guide/code-guide.md)
+- [Results](results.md)

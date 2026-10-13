@@ -9,6 +9,10 @@ dependencies = [
     "fpdf2==2.8.9",
     "pypdf>=6.20,<7",
     "ollama>=0.6.3,<1",
+    "scikit-learn>=1.9.1,<2",
+    "sentence-transformers>=6.1.0,<7",
+    "pandas>=3.0.6,<4",
+    "streamlit[pdf]>=1.65.0,<2",
 ]
 
 [project.optional-dependencies]
@@ -39,6 +43,11 @@ strict = true
 mypy_path = "src:scripts"
 files = ["src", "tests", "scripts"]
 plugins = ["pydantic.mypy"]
+
+# scikit-learn and pandas ship no type information, so mypy treats them as untyped.
+[[tool.mypy.overrides]]
+module = ["sklearn.*", "pandas.*"]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

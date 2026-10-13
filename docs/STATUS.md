@@ -2,12 +2,12 @@
 type: status
 purpose: The only status document. What is done, what is next, and where we are.
 owner: Kshitij
-reviewed: 2026-10-12
+reviewed: 2026-10-13
 ---
 
 # Status
 
-Current: Day 2, Blocks 2 and 3 are done in code. The model choice waits for Ollama to be installed.
+Current: The project is complete. The pipeline runs end to end, and `docs/results.md` holds the scores from the evaluate command.
 
 ## Done
 
@@ -16,10 +16,11 @@ Current: Day 2, Blocks 2 and 3 are done in code. The model choice waits for Olla
 3. Day 2, Block 2: PDF text reading, the LLM interface, the Ollama client, the disk cache, and extraction with one retry. Tests use fake clients.
 4. Day 2, Block 3: math checks for all three types, field scoring, and `python -m fund_notices.compare` to try models on train documents.
 5. The code guide in `docs/guide/code-guide.md`.
+6. Model chosen: `qwen3:4b`, with thinking off and every key required. See decisions 15 and 16.
+7. Day 2, Block 1, done last: the baseline classifier with TF-IDF and logistic regression. Kshitij wrote `predict`.
+8. Day 3: retrieval with MiniLM and TF-IDF, the worked example in the prompt, the pipeline with the review decision, `python -m fund_notices.process` for one PDF, `python -m fund_notices.evaluate` for the test set, the README, and a Streamlit demo page. See decisions 18 to 22.
 
 ## Next
 
-1. Kshitij installs the Ollama app and pulls `qwen3:4b` and `llama3.2:3b`.
-2. Run `python -m fund_notices.compare qwen3:4b llama3.2:3b` and record the chosen model as a decision. No model has been run yet.
-3. Day 2, Block 1, moved later: the baseline classifier with TF-IDF and logistic regression. Needs `scikit-learn`.
-4. Then: embeddings and retrieval, and the evaluate command.
+1. Kshitij reads the code guide end to end and answers the questions in `misc/interview-questions.md`.
+2. Optional ideas, none started: a larger model where memory allows, more layouts in the generator, and a review queue that says which number looks wrong.

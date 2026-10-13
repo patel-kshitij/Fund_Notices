@@ -78,3 +78,43 @@ Why: A check that did not run has not shown the document is fine. Treating it as
 
 Decision: Extraction and the math checks are built before the classifier. Until the classifier exists, extraction is given the true type from the answer file.
 Why: Extraction and the checks are the core of the tool and the larger risk, so they come first. The cost is that early extraction scores assume a perfect classifier. Scores from the full pipeline will come only from the evaluate command.
+
+## 15. The model is qwen3:4b
+
+Decision: Extraction uses `qwen3:4b` through Ollama, set with `FUND_NOTICES_MODEL=qwen3:4b`. `llama3.2:3b` was the other option.
+Why: Both were tried on a few train documents with `python -m fund_notices.compare`. qwen3 made a couple of mistakes in text fields. llama3.2 changed digits inside money fields and left out fields the page shows. A changed digit is the worse mistake, because it looks like a real number and makes a correct notice fail the math checks. qwen3 is slower, but the cache makes reruns free. The sample was small, so this choice does not stand in for a score.
+
+## 16. No thinking, and every key required
+
+Decision: Ollama is called with `think=False`. The schema sent to the model marks every key as required, while a value may still be null.
+Why: With thinking on, qwen3 took several minutes on the first document. Without required keys, the model skipped fields such as the fund name and the dates, because every field in our models has a default.
+
+## 17. The baseline classifier is TF-IDF and logistic regression on words
+
+Decision: The classifier scores single words and pairs of words with TF-IDF, leaves numbers out, and uses logistic regression. It trains on train documents only and refuses a test document.
+Why: It is fast, needs no model download, and each weight can be read and explained. Numbers are left out because amounts and dates are random in this data and would only add noise. It is the baseline that any later classifier must beat.
+
+## 18. Two kinds of similarity, each where it works
+
+Decision: MiniLM embeddings give a second opinion on the type: the type of the closest train document. TF-IDF word scores pick the worked example for extraction: the most similar train document of the predicted type, shown with its true answer. A train document is never its own example.
+Why: Both were checked on the train set only. MiniLM's nearest document usually had the right type, and it looks at text in a different way from the TF-IDF classifier, so a disagreement means something. But among documents of one type, MiniLM's nearest shared the page layout about as often as chance, while TF-IDF's nearest shared it far more often. The example is there to show where fields sit on that kind of page, so it needs the layout. Using a document as its own example would hand the model the answer.
+
+## 19. When a document goes to a person
+
+Decision: A document goes to a person when the classifier and the MiniLM nearest neighbour disagree on the type, when extraction fails twice, or when any math check finds a problem, including a missing number. There is no confidence threshold.
+Why: On the train set, the classifier's probabilities were low even when it was right, so any cutoff would have been a guess. Disagreement between two different methods needs no tuning. A math problem means the document is wrong or was read wrong, and either way a person should look.
+
+## 20. The evaluate command writes the results page
+
+Decision: `python -m fund_notices.evaluate` runs the pipeline on the test set twice, with and without the worked example, and writes `docs/results.md`. The README takes its numbers from that page. The cache stores the seconds each reply took, so a rerun from the cache reports the real model time. The design, with the worked example, was fixed before the first run on the test set.
+Why: AGENTS.md says no number goes in the docs unless it came from the evaluate command. Writing the page from the command makes that hold by construction. The run without the example shows what retrieval adds. Fixing the design first means the test set judged it and did not choose it.
+
+## 21. MiniLM lives in the project cache
+
+Decision: MiniLM is downloaded once into `cache/models` inside the project, which is git ignored. After that it loads with `local_files_only`, without the internet.
+Why: AGENTS.md says to install nothing globally, and the default download folder is global. Loading offline also matches the promise that the tool runs on the laptop alone. No document ever leaves the machine. Only the first download of the model uses the internet.
+
+## 22. A Streamlit page for demos
+
+Decision: `src/fund_notices/app.py` is a Streamlit page that reads one PDF at a time and shows the PDF next to what the tool found, with each field marked against the answer file. Kshitij approved Streamlit, with its `pdf` extra, as the one addition to the stack. The project config turns off Streamlit's usage statistics and serves the page on localhost only.
+Why: A live page shows the tool far better than terminal output, and Streamlit keeps the page to a short Python file that can be explained line by line. By default Streamlit sends usage statistics, listens on every network interface, and looks up the public IP address online. Each of those breaks the promise that everything stays on the laptop, so the config turns them off. The logic lives in `demo.py` with plain functions, so tests do not need a browser.
