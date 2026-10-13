@@ -35,7 +35,7 @@ From [docs/results.md](docs/results.md), written by the evaluate command. The te
 
 Read these numbers with care.
 
-1. The data is synthetic, from one generator with 3 page layouts per type. The worked example comes from the same generator, so it nearly always matches the layout. Real notices vary far more. These scores show the method works on this data, not on a real inbox.
+1. The data is synthetic, from one generator with 3 page layouts per type. The worked example comes from the same generator, so it nearly always matches the layout. The field hints in the prompt were also written knowing the generator's own label words. Real notices vary far more. These scores show the method works on this data, not on a real inbox.
 2. Without the worked example, the model copied a heading as an invoice line, and sometimes put a stray colon inside a name or an invoice number. Every miss was in text. No amount was wrong in either run.
 3. The test set is small, so one document moves a score a lot.
 

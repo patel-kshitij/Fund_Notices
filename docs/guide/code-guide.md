@@ -229,6 +229,7 @@ Tests never call Ollama and never download MiniLM. They use small fakes defined 
 ## Known limits
 
 1. The documents are synthetic, from one generator with 3 layouts per type. Real notices vary much more, so the scores say how well the method works on this data, not on a real inbox.
-2. The test set is small. One document is worth a lot of percentage points.
-3. The model is a small local one, chosen to fit an 8 GB laptop. A larger model would likely make fewer mistakes, at more cost or time.
-4. A document that goes to a person is only flagged. The tool does not say which number is wrong, only which rule failed.
+2. The system is fitted to the generator, though no test document leaked. The field hints in `extract.py` use the generator's own label words, for example "funding, payment, settlement, or value date" for `due_date`. The worked example also comes from the same generator.
+3. The test set is small. One document is worth a lot of percentage points.
+4. The model is a small local one, chosen to fit an 8 GB laptop. A larger model would likely make fewer mistakes, at more cost or time.
+5. A document that goes to a person is only flagged. The tool does not say which number is wrong, only which rule failed.

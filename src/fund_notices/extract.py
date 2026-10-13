@@ -32,7 +32,8 @@ Rules:
 5. Use null for any field the document does not show."""
 
 # Plain hints for each field. Documents use many labels for the same thing,
-# so the hint lists the common ones.
+# so the hint lists the common ones. These words were written knowing the
+# generator's labels, which flatters the scores. See the README.
 NOTICE_HINTS = {
     "fund_name": "the fund that sends the notice",
     "investor_name": "the investor the notice is addressed to",
