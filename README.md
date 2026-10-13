@@ -11,6 +11,10 @@ A fund administrator's inbox fills with capital call notices, distribution notic
 
 All documents are synthetic. Every page says "SYNTHETIC SAMPLE, NOT A REAL NOTICE", and every fund, investor, and vendor name is invented.
 
+[![The demo page reading a capital call. No problems are found, and every field matches the answer file.](docs/media/demo.png)](docs/media/demo.mp4)
+
+The demo page at work. Click the picture to watch the video.
+
 ## How it works
 
 1. **Read** the text of the PDF with pypdf.
